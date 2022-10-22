@@ -1,5 +1,6 @@
 const mongoose = require("mongoose");
 const validator = require("validator");
+const bcrypt = require("bcrypt");
 
 const userSchema = new mongoose.Schema(
   {
@@ -64,6 +65,38 @@ const userSchema = new mongoose.Schema(
   },
   { timestamps: { createdAt: true, updatedAt: true } }
 );
+
+/*****************************************************/
+/* PRE HOOK FOR USER MODEL */
+/*****************************************************/
+
+// To check whether password is changed or not
+userSchema.pre("save", function (next) {
+  if (!this.isModified("password") || this.isNew) return next();
+
+  this.passwordChangedAt = Date.now() - 1000;
+  next();
+});
+
+// Helps to hash the password
+userSchema.pre("save", async function (next) {
+  // If password is not modified, return
+  if (!this.isModified("password")) return next();
+
+  // Hash the password
+  this.password = await bcrypt.hash(this.password, 10);
+
+  // Remove confirm password
+  this.confirmPassword = undefined;
+
+  next();
+});
+
+// Helps to filter inactive users
+userSchema.pre(/^find/, function (next) {
+  this.find({ active: { $ne: false } });
+  next();
+});
 
 const User = mongoose.model("User", userSchema);
 
