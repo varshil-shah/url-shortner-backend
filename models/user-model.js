@@ -8,7 +8,8 @@ const userSchema = new mongoose.Schema(
       trim: true,
       maxlength: [30, "Please provide your name within 30 characters."],
       validate: {
-        validator: (value) => validator.isAlpa(value),
+        validator: (value) =>
+          validator.isAlpha(value, "en-US", { ignore: " " }),
         message: "A name should only contain Alphabets",
       },
     },
@@ -39,24 +40,26 @@ const userSchema = new mongoose.Schema(
         message:
           "A password must contain 8 character, 1 uppercase, 1 lowercase and 1 special character",
       },
-      confirmPassword: {
-        type: String,
-        trim: true,
-        validate: {
-          validator: function (value) {
-            return this.password === value;
-          },
-          message: "Passwords are not matching.",
+    },
+    confirmPassword: {
+      type: String,
+      required: [true, "Please confirm your password."],
+      trim: true,
+      validate: {
+        // THIS ONLY WORKS ON CREATE or SAVE!!
+        validator: function (value) {
+          return value === this.password;
         },
+        message: "Passwords are not matching.",
       },
-      passwordChangedAt: Date,
-      passwordResetToken: String,
-      passwordResetExpires: Date,
-      active: {
-        type: Boolean,
-        default: true,
-        select: false,
-      },
+    },
+    passwordChangedAt: Date,
+    passwordResetToken: String,
+    passwordResetExpires: Date,
+    active: {
+      type: Boolean,
+      default: true,
+      select: false,
     },
   },
   { timestamps: { createdAt: true, updatedAt: true } }
