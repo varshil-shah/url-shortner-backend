@@ -16,7 +16,7 @@ const StatusCode = require("../utils/status-code");
  */
 const signToken = (id) =>
   jwt.sign({ id }, process.env.JWT_SECRET, {
-    expiresIn: process.env.JWT_COOKIE_EXPIRES_IN,
+    expiresIn: process.env.JWT_EXPIRES_IN,
   });
 
 /**
@@ -101,7 +101,7 @@ exports.protect = catchAsync(async (req, res, next) => {
     req.headers.authorization.startsWith("Bearer")
   ) {
     token = req.headers.authorization.split(" ")[1];
-  } else if (req.cookies.jwt) {
+  } else if (req.cookies?.jwt) {
     token = req.cookies.jwt;
   }
 
@@ -116,8 +116,7 @@ exports.protect = catchAsync(async (req, res, next) => {
   }
 
   // Verify if the token is valid or not
-  const decode = promisify(jwt.verify)(token, process.env.JWT_SECRET);
-  console.log({ decode });
+  const decode = await promisify(jwt.verify)(token, process.env.JWT_SECRET);
 
   // Check if the user still exists
   const user = await User.findById(decode.id);
@@ -145,4 +144,39 @@ exports.protect = catchAsync(async (req, res, next) => {
   // Save user on request object
   req.user = user;
   next();
+});
+
+exports.updatePassword = catchAsync(async (req, res, next) => {
+  // Check if currentPassword, password and confirmPassword are their
+  const { currentPassword, password, confirmPassword } = req.body;
+
+  // Send error message if anyone of them is absent
+  if (!currentPassword || !password || !confirmPassword) {
+    return next(
+      new AppError(
+        "Please provide currentPassword, password and confirmPassword to continue!",
+        StatusCode.BAD_REQUEST
+      )
+    );
+  }
+
+  // Get user by Id
+  const user = await User.findById(req.user._id).select("+password");
+
+  // Check if old password matches current provided password
+  if (!(await user.verifyPassword(currentPassword, user.password))) {
+    return next(
+      new AppError(
+        "Your current password is not matching!",
+        StatusCode.UNAUTHORIZED
+      )
+    );
+  }
+
+  user.password = password;
+  user.confirmPassword = confirmPassword;
+  await user.save();
+
+  // Send new token and logged in the user
+  createAndSendToken(user, StatusCode.OK, res);
 });
