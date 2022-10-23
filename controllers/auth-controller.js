@@ -2,6 +2,8 @@ const mongoose = require("mongoose");
 const express = require("express");
 const jwt = require("jsonwebtoken");
 
+const { promisify } = require("util");
+
 const User = require("../models/user-model");
 const catchAsync = require("../utils/catch-async");
 const AppError = require("../utils/app-error");
@@ -89,4 +91,58 @@ exports.login = catchAsync(async (req, res, next) => {
 
   // If everything goes well, send token and user details
   createAndSendToken(user, StatusCode.OK, res);
+});
+
+exports.protect = catchAsync(async (req, res, next) => {
+  // Fetch token from req.headers
+  let token;
+  if (
+    req.headers.authorization &&
+    req.headers.authorization.startsWith("Bearer")
+  ) {
+    token = req.headers.authorization.split(" ")[1];
+  } else if (req.cookies.jwt) {
+    token = req.cookies.jwt;
+  }
+
+  // If no token found, send an error message
+  if (!token) {
+    return next(
+      new AppError(
+        "You are not logged in! Please login to continue",
+        StatusCode.UNAUTHORIZED
+      )
+    );
+  }
+
+  // Verify if the token is valid or not
+  const decode = promisify(jwt.verify)(token, process.env.JWT_SECRET);
+  console.log({ decode });
+
+  // Check if the user still exists
+  const user = await User.findById(decode.id);
+
+  // If no user found, send error message
+  if (!user) {
+    return next(
+      new AppError(
+        "User belonging to this token no longer exists!",
+        StatusCode.UNAUTHORIZED
+      )
+    );
+  }
+
+  // Check if user has changed his/her password after assigning token
+  if (user.changedPasswordAfter(decode.iat)) {
+    return next(
+      new AppError(
+        "User recently changed password! Please login again to continue",
+        StatusCode.UNAUTHORIZED
+      )
+    );
+  }
+
+  // Save user on request object
+  req.user = user;
+  next();
 });
