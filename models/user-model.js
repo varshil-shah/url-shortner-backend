@@ -7,11 +7,12 @@ const userSchema = new mongoose.Schema(
     name: {
       type: String,
       trim: true,
+      lowercase: true,
       maxlength: [30, "Please provide your name within 30 characters."],
       validate: {
         validator: (value) =>
           validator.isAlpha(value, "en-US", { ignore: " " }),
-        message: "A name should only contain Alphabets",
+        message: "A name should only contain alphabets",
       },
     },
     email: {
@@ -97,6 +98,13 @@ userSchema.pre(/^find/, function (next) {
   this.find({ active: { $ne: false } });
   next();
 });
+
+/*****************************************************/
+/* METHODS AVAIABLE ON USER SCHEMA OBJECT */
+/*****************************************************/
+userSchema.methods.verifyPassword = async (password, hashPassword) => {
+  return await bcrypt.compare(password, hashPassword);
+};
 
 const User = mongoose.model("User", userSchema);
 

@@ -60,3 +60,33 @@ exports.signup = catchAsync(async (req, res, next) => {
 
   createAndSendToken(user, StatusCode.CREATED, res);
 });
+
+exports.login = catchAsync(async (req, res, next) => {
+  // Fetch email and password from req.body
+  const { email, password } = req.body;
+
+  // Check if both are not null
+  if (!email || !password) {
+    return next(
+      new AppError(
+        "Please provide both email and password",
+        StatusCode.BAD_REQUEST
+      )
+    );
+  }
+
+  // Check if the user exists and password is correct
+  const user = await User.findOne({ email }).select("+password");
+
+  if (!user || !(await user.verifyPassword(password, user.password))) {
+    return next(
+      new AppError(
+        "Email doesn't exists or password is incorrect!",
+        StatusCode.UNAUTHORIZED
+      )
+    );
+  }
+
+  // If everything goes well, send token and user details
+  createAndSendToken(user, StatusCode.OK, res);
+});
