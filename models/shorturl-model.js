@@ -34,6 +34,16 @@ const shortUrlSchema = new mongoose.Schema(
   { timestamps: { createdAt: true, updatedAt: true } }
 );
 
+/*****************************************************/
+/* PRE HOOK FOR SHORT URL MODEL */
+/*****************************************************/
+
+// Helps to filter inactive urls
+shortUrlSchema.pre(/^find/, function (next) {
+  this.find({ active: { $ne: false } });
+  next();
+});
+
 const ShortUrl = mongoose.model("shorturl", shortUrlSchema);
 
 module.exports = ShortUrl;
