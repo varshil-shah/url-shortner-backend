@@ -26,8 +26,12 @@ const shortUrlSchema = new mongoose.Schema(
         message: "Please provide a valid url.",
       },
     },
+    active: {
+      type: Boolean,
+      default: true,
+    },
   },
-  { _id: false, timestamps: { createdAt: true, updatedAt: true } }
+  { timestamps: { createdAt: true, updatedAt: true } }
 );
 
 const ShortUrl = mongoose.model("shorturl", shortUrlSchema);

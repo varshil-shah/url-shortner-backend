@@ -4,10 +4,13 @@ const expressRateLimiter = require("express-rate-limit");
 const mongoSanitize = require("express-mongo-sanitize");
 const xss = require("xss-clean");
 
+const AppError = require("./utils/app-error");
+
 const app = express();
 
 const globalErrorHandler = require("./controllers/error-controller");
 const userRouter = require("./routes/user-routes");
+const shortUrlRouter = require("./routes/shorturl-routes");
 
 const StatusCode = require("./utils/status-code");
 
@@ -27,6 +30,7 @@ if (process.env.NODE_ENV === "development") app.use(morgan("dev"));
 
 // Routes
 app.use("/api/v1/users", userRouter);
+app.use("/api/v1/shorturls", shortUrlRouter);
 
 // Handle unknown routes
 app.all("*", (req, res, next) => {
