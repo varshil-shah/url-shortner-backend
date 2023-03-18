@@ -6,22 +6,22 @@ const Analytics = require("../models/analytics-model");
 
 const catchAsync = require("../utils/catch-async");
 const StatusCode = require("../utils/status-code");
+const APIFeatures = require("../utils/api-features");
 
-exports.restrictDeleteShortUrl = catchAsync(async (req, res, next) => {
+exports.restrictShortUrl = catchAsync(async (req, res, next) => {
   const { shortCode } = req.params;
   const shortUrlInstance = await ShortUrl.findOne({
     shortCode,
-    userId: req.user._id,
   });
 
   if (!shortUrlInstance) {
     return next(
       new AppError("No url found with this short code.", StatusCode.NOT_FOUND)
     );
-  } else if (shortUrlInstance.userId !== req.user._id) {
+  } else if (shortUrlInstance.userId.toString() !== req.user._id.toString()) {
     return next(
       new AppError(
-        "You don't have access to delete this url.",
+        "You don't have right to access this path.",
         StatusCode.FORBIDDEN
       )
     );
@@ -67,9 +67,82 @@ exports.createShortUrl = catchAsync(async (req, res, next) => {
   });
 });
 
+exports.getAllShortUrls = catchAsync(async (req, res, next) => {
+  const features = new APIFeatures(
+    ShortUrl.find({ userId: req.user._id }),
+    req.query
+  )
+    .filter()
+    .sort()
+    .fieldLimit()
+    .pagination();
+  const shortUrls = await features.query;
+
+  res.status(StatusCode.OK).json({
+    status: "success",
+    results: shortUrls.length,
+    data: shortUrls,
+  });
+});
+
+exports.getShortUrl = catchAsync(async (req, res, next) => {
+  const { shortCode } = req.params;
+  const shortUrl = await ShortUrl.findOne({ shortCode, userId: req.user._id });
+
+  if (!shortUrl) {
+    return next(
+      new AppError("No short url found with this code.", StatusCode.NOT_FOUND)
+    );
+  }
+
+  res.status(StatusCode.OK).json({
+    status: "success",
+    data: shortUrl,
+  });
+});
+
 exports.redirectShortUrl = catchAsync(async (req, res, next) => {
   // Redirect user
   res.status(StatusCode.MOVED_TEMPORARILY).redirect(req.longUrl);
+});
+
+exports.updateShortUrl = catchAsync(async (req, res, next) => {
+  const { params, body } = req;
+  const updateAttributes = ["shortCode", "longUrl", "active"];
+
+  // Filtering out required attributes
+  const obj = {};
+  Object.keys(body).forEach((e) => {
+    if (updateAttributes.includes(e)) {
+      obj[e] = body[e];
+    }
+  });
+
+  // Check if shortCode already exists
+  if (obj.shortCode) {
+    const IsExistingShortCode = await ShortUrl.findOne({
+      shortCode: obj.shortCode,
+    });
+
+    if (IsExistingShortCode) {
+      return next(
+        new AppError(
+          "Short code with this name already exists",
+          StatusCode.FORBIDDEN
+        )
+      );
+    }
+  }
+
+  const shortUrl = await ShortUrl.findOneAndUpdate(params.shortCode, obj, {
+    runValidators: true,
+    new: true,
+  });
+
+  res.status(StatusCode.OK).json({
+    status: "success",
+    data: shortUrl,
+  });
 });
 
 // Update the status of shorturl from active to inactive
