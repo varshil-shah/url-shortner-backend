@@ -1,6 +1,6 @@
 const crc32 = require("crc-32");
 
-const UrlShortner = require("../models/shorturl-model");
+const ShortUrl = require("../models/shorturl-model");
 const catchAsync = require("../utils/catch-async");
 const AppError = require("../utils/app-error");
 const StatusCode = require("../utils/status-code");
@@ -22,13 +22,15 @@ exports.createShortUrl = catchAsync(async (req, res, next) => {
     .toString(16);
 
   // Store into database
-  const shortUrlInstance = await UrlShortner.create({
+  const shortUrlInstance = await ShortUrl.create({
     userId: req.user._id,
     shortCode,
     longUrl,
   });
 
-  const shortUrl = `${req.protocol}://${req.get("host")}/shorturl/${shortCode}`;
+  const shortUrl = `${req.protocol}://${req.get(
+    "host"
+  )}/api/v1/shorturls/s/${shortCode}`;
 
   // Send short url
   res.status(StatusCode.CREATED).json({
@@ -38,4 +40,9 @@ exports.createShortUrl = catchAsync(async (req, res, next) => {
       ...shortUrlInstance.toObject(),
     },
   });
+});
+
+exports.redirectShortUrl = catchAsync(async (req, res, next) => {
+  // Redirect user
+  res.status(StatusCode.MOVED_TEMPORARILY).redirect(req.longUrl);
 });
