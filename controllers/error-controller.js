@@ -112,7 +112,9 @@ module.exports = (error, req, res, next) => {
   if (process.env.NODE_ENV === "development") {
     sendErrorForDevelopment(error, res);
   } else if (process.env.NODE_ENV === "production") {
-    let err = structuredClone(error);
+    let err = { ...error };
+    err.message = error.message;
+    err.name = error.name;
 
     if (err.code === 11000) err = handleDuplicateFields(err);
 
