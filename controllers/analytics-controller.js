@@ -12,8 +12,6 @@ exports.storeAnalytics = catchAsync(async (req, res, next) => {
   // Get shortcode from params
   const { shortCode } = req.params;
 
-  console.log({ shortCode });
-
   // Check if short code exists
   const shortUrlInstance = await ShortUrl.findOne({ shortCode });
 
@@ -48,6 +46,10 @@ exports.storeAnalytics = catchAsync(async (req, res, next) => {
     browser: extractString(req.useragent.browser),
     os: extractString(req.useragent.os),
   });
+
+  // Increment the clicks counter
+  shortUrlInstance.clicks++;
+  await shortUrlInstance.save();
 
   // Move ahead
   next();
