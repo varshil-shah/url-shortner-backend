@@ -3,6 +3,7 @@ const morgan = require("morgan");
 const expressRateLimiter = require("express-rate-limit");
 const mongoSanitize = require("express-mongo-sanitize");
 const xss = require("xss-clean");
+const useragent = require("express-useragent");
 
 const AppError = require("./utils/app-error");
 
@@ -24,6 +25,9 @@ app.use(mongoSanitize());
 
 // Data sanitization against CROSS-SITE scripting attacks
 app.use(xss());
+
+// Get useragent details
+app.use(useragent.express());
 
 // Log every request in development mode
 if (process.env.NODE_ENV === "development") app.use(morgan("dev"));
