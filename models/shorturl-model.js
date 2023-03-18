@@ -26,6 +26,10 @@ const shortUrlSchema = new mongoose.Schema(
         message: "Please provide a valid url.",
       },
     },
+    clicks: {
+      type: Number,
+      required: [true, "Please increment number of clicks."],
+    },
     active: {
       type: Boolean,
       default: true,
