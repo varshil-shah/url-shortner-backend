@@ -56,9 +56,10 @@ exports.createShortUrl = catchAsync(async (req, res, next) => {
   }
 
   // Generate short code combining userId + longUrl
-  const shortCode = crc32
+  let shortCode = crc32
     .buf(Buffer.from(`${req.user._id}-${longUrl}`, "binary"), 0)
     .toString(16);
+  if (shortCode.startsWith("-")) shortCode = shortCode.substring(1);
 
   const shortUrl = `${req.protocol}://${req.get(
     "host"
@@ -161,10 +162,14 @@ exports.updateShortUrl = catchAsync(async (req, res, next) => {
     )}/api/v1/shorturls/s/${body.shortCode}`;
   }
 
-  const shortUrl = await ShortUrl.findOneAndUpdate(params.shortCode, object, {
-    runValidators: true,
-    new: true,
-  });
+  const shortUrl = await ShortUrl.findOneAndUpdate(
+    { shortCode: params.shortCode },
+    object,
+    {
+      runValidators: true,
+      new: true,
+    }
+  );
 
   res.status(StatusCode.OK).json({
     status: "success",
