@@ -64,7 +64,15 @@ const userSchema = new mongoose.Schema(
       select: false,
     },
   },
-  { timestamps: { createdAt: true, updatedAt: true } }
+  {
+    timestamps: { createdAt: true, updatedAt: true },
+    toJSON: {
+      virtuals: true,
+    },
+    toObject: {
+      virtuals: true,
+    },
+  }
 );
 
 /*****************************************************/
