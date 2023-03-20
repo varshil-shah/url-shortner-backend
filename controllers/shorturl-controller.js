@@ -32,7 +32,7 @@ exports.restrictShortUrl = catchAsync(async (req, res, next) => {
 
 exports.createShortUrl = catchAsync(async (req, res, next) => {
   // Get url from req.body
-  const { longUrl } = req.body;
+  const { longUrl, description } = req.body;
 
   // Check if long url exists in req.body
   if (!longUrl) {
@@ -41,21 +41,37 @@ exports.createShortUrl = catchAsync(async (req, res, next) => {
     );
   }
 
+  // Check if the long url already exists by the current user
+  const existsLongUrl = await ShortUrl.findOne({
+    longUrl,
+    userId: req.user._id,
+  });
+  if (existsLongUrl) {
+    return next(
+      new AppError(
+        "You already have a short url for the given long url.",
+        StatusCode.BAD_REQUEST
+      )
+    );
+  }
+
   // Generate short code combining userId + longUrl
   const shortCode = crc32
     .buf(Buffer.from(`${req.user._id}-${longUrl}`, "binary"), 0)
     .toString(16);
 
+  const shortUrl = `${req.protocol}://${req.get(
+    "host"
+  )}/api/v1/shorturls/s/${shortCode}`;
+
   // Store into database
   const shortUrlInstance = await ShortUrl.create({
     userId: req.user._id,
     shortCode,
+    description,
+    shortUrl,
     longUrl,
   });
-
-  const shortUrl = `${req.protocol}://${req.get(
-    "host"
-  )}/api/v1/shorturls/s/${shortCode}`;
 
   // Send short url
   res.status(StatusCode.CREATED).json({
@@ -108,20 +124,24 @@ exports.redirectShortUrl = catchAsync(async (req, res, next) => {
 
 exports.updateShortUrl = catchAsync(async (req, res, next) => {
   const { params, body } = req;
-  const updateAttributes = ["shortCode", "longUrl", "active"];
+  const updatesList = [
+    "shortCode",
+    "shortUrl",
+    "longUrl",
+    "description",
+    "active",
+  ];
 
-  // Filtering out required attributes
-  const obj = {};
+  // Filter out other attributes and null values
+  const object = {};
   Object.keys(body).forEach((e) => {
-    if (updateAttributes.includes(e)) {
-      obj[e] = body[e];
-    }
+    if (body[e] || updatesList.includes(e)) object[e] = body[e];
   });
 
   // Check if shortCode already exists
-  if (obj.shortCode) {
+  if (body.shortCode) {
     const IsExistingShortCode = await ShortUrl.findOne({
-      shortCode: obj.shortCode,
+      shortCode: body.shortCode,
     });
 
     if (IsExistingShortCode) {
@@ -134,7 +154,14 @@ exports.updateShortUrl = catchAsync(async (req, res, next) => {
     }
   }
 
-  const shortUrl = await ShortUrl.findOneAndUpdate(params.shortCode, obj, {
+  // If shortCode is updated, update shortUrl
+  if (body.shortCode) {
+    object.shortUrl = `${req.protocol}://${req.get(
+      "host"
+    )}/api/v1/shorturls/s/${body.shortCode}`;
+  }
+
+  const shortUrl = await ShortUrl.findOneAndUpdate(params.shortCode, object, {
     runValidators: true,
     new: true,
   });

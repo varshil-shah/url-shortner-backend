@@ -16,6 +16,17 @@ const shortUrlSchema = new mongoose.Schema(
       minlength: [8, "Please provide short url with minimum 8 characters"],
       maxlength: [50, "Maximum 50 characters allowed for short url."],
     },
+    description: {
+      type: String,
+      trim: true,
+      maxlength: [50, "Maximum 50 characters allowed for short url."],
+    },
+    shortUrl: {
+      type: String,
+      trim: true,
+      unique: true,
+      required: [true, "Please provide a short url."],
+    },
     longUrl: {
       type: String,
       trim: true,
@@ -23,20 +34,23 @@ const shortUrlSchema = new mongoose.Schema(
       required: [true, "Please provide a long url."],
       validate: {
         validator: (value) => validator.isURL(value),
-        message: "Please provide a valid url.",
+        message: "Please provide a valid long url.",
       },
-    },
-    clicks: {
-      type: Number,
-      required: [true, "Please increment number of clicks."],
-      default: 0,
     },
     active: {
       type: Boolean,
       default: true,
     },
   },
-  { timestamps: { createdAt: true, updatedAt: true } }
+  {
+    timestamps: { createdAt: true, updatedAt: true },
+    toJSON: {
+      virtuals: true,
+    },
+    toObject: {
+      virtuals: true,
+    },
+  }
 );
 
 /*****************************************************/

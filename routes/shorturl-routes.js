@@ -12,6 +12,17 @@ router.get(
 
 router.use(authController.protect);
 
-router.route("/").post(shortUrlController.createShortUrl);
+router
+  .route("/")
+  .post(shortUrlController.createShortUrl)
+  .get(shortUrlController.getAllShortUrls);
+
+router.use("/:shortCode", shortUrlController.restrictShortUrl);
+
+router
+  .route("/:shortCode")
+  .get(shortUrlController.getShortUrl)
+  .patch(shortUrlController.updateShortUrl)
+  .delete(shortUrlController.deleteShortUrl);
 
 module.exports = router;
