@@ -59,7 +59,8 @@ exports.createShortUrl = catchAsync(async (req, res, next) => {
   let shortCode = crc32
     .buf(Buffer.from(`${req.user._id}-${longUrl}`, "binary"), 0)
     .toString(16);
-  if (shortCode.startsWith("-")) shortCode = shortCode.substring(1);
+  console.log({ shortCode });
+  if (shortCode.startsWith("-")) shortCode = `z${shortCode.substring(1)}`;
 
   const shortUrl = `${req.protocol}://${req.get(
     "host"
@@ -160,6 +161,14 @@ exports.updateShortUrl = catchAsync(async (req, res, next) => {
     object.shortUrl = `${req.protocol}://${req.get(
       "host"
     )}/api/v1/shorturls/s/${body.shortCode}`;
+
+    // Update all the shortCode in Analytics Model
+    await Analytics.updateMany(
+      {
+        shortCode: params.shortCode,
+      },
+      { shortCode: body.shortCode }
+    );
   }
 
   const shortUrl = await ShortUrl.findOneAndUpdate(

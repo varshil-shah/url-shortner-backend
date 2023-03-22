@@ -13,7 +13,7 @@ const shortUrlSchema = new mongoose.Schema(
       trim: true,
       unique: true,
       required: [true, "Please provide short code."],
-      minlength: [8, "Please provide short url with minimum 8 characters"],
+      minlength: [7, "Please provide short url with minimum 7 characters"],
       maxlength: [50, "Maximum 50 characters allowed for short url."],
     },
     description: {
