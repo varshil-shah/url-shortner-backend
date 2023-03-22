@@ -151,7 +151,7 @@ exports.getAnalyticsOfShortCode = catchAsync(async (req, res, next) => {
     });
   }
 
-  const stats = await Analytics.aggregate();
+  const stats = await Analytics.aggregate(aggregatePipeline);
 
   res.status(StatusCode.OK).json({
     status: "success",
