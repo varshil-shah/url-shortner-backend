@@ -30,7 +30,6 @@ const shortUrlSchema = new mongoose.Schema(
     longUrl: {
       type: String,
       trim: true,
-      unique: true,
       required: [true, "Please provide a long url."],
       validate: {
         validator: (value) => validator.isURL(value),
