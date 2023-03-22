@@ -4,6 +4,7 @@ const expressRateLimiter = require("express-rate-limit");
 const mongoSanitize = require("express-mongo-sanitize");
 const xss = require("xss-clean");
 const useragent = require("express-useragent");
+const cors = require("cors");
 
 const AppError = require("./utils/app-error");
 
@@ -20,6 +21,9 @@ const StatusCode = require("./utils/status-code");
 // Limiting amount of data comes in the body
 app.use(express.json({ limit: "5kb" }));
 app.use(express.urlencoded({ extended: true, limit: "5kb" }));
+
+// Use cors
+app.use(cors());
 
 // Data sanitization against NOSQL query injection
 app.use(mongoSanitize());
