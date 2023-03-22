@@ -12,6 +12,7 @@ const app = express();
 const globalErrorHandler = require("./controllers/error-controller");
 const userRouter = require("./routes/user-routes");
 const shortUrlRouter = require("./routes/shorturl-routes");
+const analyticsRouter = require("./routes/analytics-routes");
 
 const StatusCode = require("./utils/status-code");
 
@@ -35,6 +36,7 @@ if (process.env.NODE_ENV === "development") app.use(morgan("dev"));
 // Routes
 app.use("/api/v1/users", userRouter);
 app.use("/api/v1/shorturls", shortUrlRouter);
+app.use("/api/v1/analytics", analyticsRouter);
 
 // Handle unknown routes
 app.all("*", (req, res, next) => {
