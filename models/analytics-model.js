@@ -7,22 +7,14 @@ const analyticsSchema = new mongoose.Schema(
       type: String,
       required: [true, "Please provide a short code."],
       trim: true,
-      minlength: [8, "Please provide short url with minimum 8 characters"],
+      minlength: [7, "Please provide short url with minimum 7 characters"],
       maxlength: [50, "Maximum 50 characters allowed for short url."],
+      ref: "Shorturl",
     },
     ownerId: {
       type: mongoose.Schema.Types.ObjectId,
       required: [true, "Please provide owner id of current logged in user."],
       ref: "User",
-    },
-    ip: {
-      type: String,
-      required: [true, "Please provide an IP address."],
-      trim: true,
-      validate: {
-        validator: (value) => validator.isIP(value),
-        message: "Please provide a valid IP address.",
-      },
     },
     city: {
       type: String,
@@ -101,8 +93,19 @@ const analyticsSchema = new mongoose.Schema(
         message: "An OS name should only contain alphabets",
       },
     },
+    createdAt: {
+      type: Date,
+      default: Date.now(),
+    },
   },
-  { timestamps: { createdAt: true, updatedAt: true } }
+  {
+    toJSON: {
+      virtuals: true,
+    },
+    toObject: {
+      virtuals: true,
+    },
+  }
 );
 
 const Analytics = mongoose.model("Analytics", analyticsSchema);
