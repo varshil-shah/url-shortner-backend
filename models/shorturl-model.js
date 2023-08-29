@@ -37,7 +37,7 @@ const shortUrlSchema = new mongoose.Schema(
       },
     },
     qrCode: {
-      type: String,
+      type: String, // base-64 encoded string
       trim: true,
     },
     active: {

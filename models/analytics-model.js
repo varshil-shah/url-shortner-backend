@@ -16,6 +16,16 @@ const analyticsSchema = new mongoose.Schema(
       required: [true, "Please provide owner id of current logged in user."],
       ref: "User",
     },
+    latitude: {
+      type: String,
+      required: [true, "Please provide a latitude."],
+      trim: true,
+    },
+    longitude: {
+      type: String,
+      required: [true, "Please provide a longitude."],
+      trim: true,
+    },
     city: {
       type: String,
       required: [true, "Please provide a city name."],

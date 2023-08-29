@@ -31,7 +31,7 @@ exports.restrictTo = catchAsync(async (req, res, next) => {
 exports.storeAnalytics = catchAsync(async (req, res, next) => {
   // Get shortcode from params
   const { shortCode } = req.params;
-  const { city, region, country, continent } = req.body;
+  const { ipAddress } = req.body;
 
   // Check if short code exists
   const shortUrlInstance = await ShortUrl.findOne({ shortCode });
@@ -48,14 +48,20 @@ exports.storeAnalytics = catchAsync(async (req, res, next) => {
 
   req.longUrl = shortUrlInstance.longUrl;
 
+  // Get geolocation details
+  const response = await node_fetch(`http://ip-api.com/json/${ipAddress}`);
+  const data = await response.json();
+
   // Store log into database
   await Analytics.create({
     shortCode,
     ownerId: shortUrlInstance.userId,
-    city,
-    region,
-    country,
-    continent,
+    latitude: data.lat,
+    longitude: data.lon,
+    city: data.city,
+    region: data.regionName,
+    country: data.country,
+    continent: data.continent,
     platform: req.useragent.platform,
     browser: extractString(req.useragent.browser),
     os: extractString(req.useragent.os),
