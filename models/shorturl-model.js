@@ -36,6 +36,10 @@ const shortUrlSchema = new mongoose.Schema(
         message: "Please provide a valid long url.",
       },
     },
+    qrCode: {
+      type: String,
+      trim: true,
+    },
     active: {
       type: Boolean,
       default: true,
