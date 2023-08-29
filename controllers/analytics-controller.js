@@ -31,7 +31,7 @@ exports.restrictTo = catchAsync(async (req, res, next) => {
 exports.storeAnalytics = catchAsync(async (req, res, next) => {
   // Get shortcode from params
   const { shortCode } = req.params;
-  const { ipAddress } = req.body;
+  const { ip } = req.query;
 
   // Check if short code exists
   const shortUrlInstance = await ShortUrl.findOne({ shortCode });
@@ -49,7 +49,9 @@ exports.storeAnalytics = catchAsync(async (req, res, next) => {
   req.longUrl = shortUrlInstance.longUrl;
 
   // Get geolocation details
-  const response = await node_fetch(`http://ip-api.com/json/${ipAddress}`);
+  const response = await node_fetch(
+    `http://ip-api.com/json/${ip}?fields=continent,country,regionName,city,query,lat,lon`
+  );
   const data = await response.json();
 
   // Store log into database
@@ -75,7 +77,11 @@ exports.getAnalytics = catchAsync(async (req, res, next) => {
   const features = new APIFeatures(
     Analytics.find({ ownerId: req.user._id }),
     req.query
-  );
+  )
+    .filter()
+    .sort()
+    .fieldLimit()
+    .pagination();
   const stats = await features.query;
 
   res.status(StatusCode.OK).json({
@@ -156,52 +162,6 @@ exports.getAnalyticsOfShortCode = catchAsync(async (req, res, next) => {
 
   res.status(StatusCode.OK).json({
     status: "success",
-    data: stats,
-  });
-});
-
-exports.getAnalyticsByDates = catchAsync(async (req, res, next) => {
-  const {
-    start = formatDate(),
-    end = formatDate(1),
-    groupBy = "normal",
-  } = req.query;
-
-  const aggregatePipeline = [
-    {
-      $match: {
-        ownerId: { $eq: req.user._id },
-        createdAt: {
-          $gte: new Date(start),
-          $lte: new Date(end),
-        },
-      },
-    },
-    {
-      $sort: {
-        createdAt: 1,
-      },
-    },
-  ];
-
-  // If groupBy is NOT normal, send grouped response
-  if (groupBy !== "normal") {
-    aggregatePipeline.push({
-      $group: {
-        _id: `$${groupBy}`,
-        count: { $sum: 1 },
-        countries: { $addToSet: "$country" },
-        os: { $addToSet: "$os" },
-        region: { $addToSet: "$region" },
-        city: { $addToSet: "$city" },
-      },
-    });
-  }
-
-  const stats = await Analytics.aggregate(aggregatePipeline);
-  res.status(StatusCode.OK).json({
-    status: "success",
-    results: stats.length,
     data: stats,
   });
 });

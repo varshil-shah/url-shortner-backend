@@ -5,7 +5,6 @@ const analyticsController = require("../controllers/analytics-controller");
 router.use(authController.protect);
 
 router.route("/").get(analyticsController.getAnalytics);
-router.route("/analyse-by-date").get(analyticsController.getAnalyticsByDates);
 router.route("/group-by/:group").get(analyticsController.getAnalyticsByGroup);
 
 router.use("/:shortCode", analyticsController.restrictTo);
