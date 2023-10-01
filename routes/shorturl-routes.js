@@ -10,6 +10,8 @@ router.get(
   shortUrlController.redirectShortUrl
 );
 
+router.get("/qrcode/:message", shortUrlController.generateQRCode);
+
 router.use(authController.protect);
 
 router

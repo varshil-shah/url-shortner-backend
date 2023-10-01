@@ -1,4 +1,5 @@
 const crc32 = require("crc-32");
+const axios = require("axios");
 
 const ShortUrl = require("../models/shorturl-model");
 const AppError = require("../utils/app-error");
@@ -214,4 +215,24 @@ exports.deleteShortUrl = catchAsync(async (req, res, next) => {
     status: "success",
     data: null,
   });
+});
+
+exports.generateQRCode = catchAsync(async (req, res, next) => {
+  const { message } = req.params;
+
+  if (!message) {
+    return next(
+      new AppError(
+        "Please provide message to generate QR Code.",
+        StatusCode.BAD_REQUEST
+      )
+    );
+  }
+
+  const url = `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${message}`;
+  const response = await axios.get(url, { responseType: "arraybuffer" });
+  const imageBuffer = Buffer.from(response.data, "base64");
+
+  res.setHeader("Content-Type", "image/png");
+  res.status(StatusCode.OK).send(imageBuffer);
 });
