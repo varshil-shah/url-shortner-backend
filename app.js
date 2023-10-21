@@ -18,6 +18,7 @@ const shortUrlRouter = require("./routes/shorturl-routes");
 const analyticsRouter = require("./routes/analytics-routes");
 
 const StatusCode = require("./utils/status-code");
+const User = require("./models/user-model");
 
 // Body parser, reading data from request.body
 // Limiting amount of data comes in the body
@@ -36,6 +37,17 @@ app.use(xss());
 // Get useragent details
 app.use(useragent.express());
 
+// Initialize passport
+app.use(passport.initialize());
+
+// Log every request in development mode
+if (process.env.NODE_ENV === "development") app.use(morgan("dev"));
+
+// Routes
+app.use("/api/v1/users", userRouter);
+app.use("/api/v1/shorturls", shortUrlRouter);
+app.use("/api/v1/analytics", analyticsRouter);
+
 // Passport configuration
 passport.use(
   new GitHubStrategy(
@@ -44,10 +56,21 @@ passport.use(
       clientSecret: process.env.GITHUB_CLIENT_SECRET,
       callbackURL: process.env.GITHUB_CALLBACK_URL,
     },
-    function (accessToken, refreshToken, profile, cb) {
-      console.log({ accessToken, refreshToken, profile });
-      console.log(profile.emails);
-      return cb(null, profile);
+    async function (accessToken, refreshToken, profile, done) {
+      // check if user already exists
+      const user = await User.findOne({ githubId: profile.id });
+      if (user) return done(null, user);
+
+      // create new user
+      const newUser = await User.create({
+        name: profile.displayName,
+        email: profile.emails[0].value,
+        role: "user",
+        authType: "github",
+        githubId: profile.id,
+      });
+
+      return done(null, newUser);
     }
   )
 );
@@ -59,17 +82,6 @@ passport.serializeUser((user, done) => {
 passport.deserializeUser((obj, done) => {
   done(null, obj);
 });
-
-// Initialize passport
-app.use(passport.initialize());
-
-// Log every request in development mode
-if (process.env.NODE_ENV === "development") app.use(morgan("dev"));
-
-// Routes
-app.use("/api/v1/users", userRouter);
-app.use("/api/v1/shorturls", shortUrlRouter);
-app.use("/api/v1/analytics", analyticsRouter);
 
 // Handle unknown routes
 app.all("*", (req, res, next) => {

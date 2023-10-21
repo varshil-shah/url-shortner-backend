@@ -9,11 +9,7 @@ router.get("/github", authController.githubAuth);
 router.get(
   "/github/callback",
   authController.githubAuthCallback,
-  (req, res) => {
-    // Successful authentication, redirect or handle as needed
-    // TODO: REDIRECT USER TO FrontEnd Dashboard Page
-    res.redirect("/");
-  }
+  authController.storeGithubUser
 );
 
 router.patch(

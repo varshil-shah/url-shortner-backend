@@ -9,16 +9,13 @@ const User = require("../models/user-model");
 const catchAsync = require("../utils/catch-async");
 const AppError = require("../utils/app-error");
 const StatusCode = require("../utils/status-code");
+const { signToken } = require("../utils/utils");
 
 /**
  * Generated a token based on provided id.
  * @param {String} id
  * @returns {String}
  */
-const signToken = (id) =>
-  jwt.sign({ id }, process.env.JWT_SECRET, {
-    expiresIn: process.env.JWT_EXPIRES_IN,
-  });
 
 /**
  * Create and send new token to user
@@ -57,6 +54,7 @@ exports.signup = catchAsync(async (req, res, next) => {
     name: req.body.name,
     email: req.body.email,
     role: "user",
+    authType: "local",
     password: req.body.password,
     confirmPassword: req.body.confirmPassword,
   });
@@ -188,4 +186,8 @@ exports.githubAuthCallback = passport.authenticate("github", {
   // TODO: Change failureRedirect url based on frontend.
   failureRedirect: "/login",
   session: false,
+});
+
+exports.storeGithubUser = catchAsync(async (req, res, next) => {
+  createAndSendToken(req.user, StatusCode.OK, res);
 });
