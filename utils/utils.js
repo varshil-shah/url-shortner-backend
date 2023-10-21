@@ -1,3 +1,5 @@
+const jwt = require("jsonwebtoken");
+
 /**
  * Extracts string from numeric-string value
  * @param {String} value
@@ -23,3 +25,13 @@ exports.formatDate = (next = 0, date = new Date()) => {
   const formattedDate = year + "-" + month + "-" + day;
   return formattedDate;
 };
+
+/**
+ * Generates a token based on provided id.
+ * @param {String} id
+ * @returns {String}
+ */
+exports.signToken = (id) =>
+  jwt.sign({ id }, process.env.JWT_SECRET, {
+    expiresIn: process.env.JWT_EXPIRES_IN,
+  });
