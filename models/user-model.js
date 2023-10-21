@@ -26,6 +26,15 @@ const userSchema = new mongoose.Schema(
         message: "Please provide a valid email address",
       },
     },
+    githubId: {
+      type: String,
+      trim: true,
+    },
+    authType: {
+      type: String,
+      enum: ["local", "github"],
+      default: "local",
+    },
     role: {
       type: String,
       enum: ["user", "admin"],
@@ -34,23 +43,31 @@ const userSchema = new mongoose.Schema(
     password: {
       type: String,
       trim: true,
-      minlength: [8, "Please provide a password with minimum length 8."],
-      required: [true, "Please provide your password."],
+      minlength: [8, "A password must contain at least 8 characters"],
+      required: function () {
+        return this.authType === "local";
+      },
       select: false,
       validate: {
-        validator: (value) => validator.isStrongPassword(value),
+        validator: function (value) {
+          return this.authType === "local"
+            ? validator.isStrongPassword(value)
+            : true;
+        },
         message:
           "A password must contain 8 character, 1 uppercase, 1 lowercase and 1 special character",
       },
     },
     confirmPassword: {
       type: String,
-      required: [true, "Please confirm your password."],
+      required: function () {
+        return this.authType === "local";
+      },
       trim: true,
       validate: {
         // THIS ONLY WORKS ON CREATE or SAVE!!
         validator: function (value) {
-          return value === this.password;
+          return value === this.password && this.authType === "local";
         },
         message: "Passwords are not matching.",
       },
