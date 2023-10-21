@@ -64,11 +64,13 @@ passport.use(
       // create new user
       const newUser = await User.create({
         name: profile.displayName,
-        email: profile.emails[0].value,
+        email: profile.emails[0].value || profile.email.value,
         role: "user",
         authType: "github",
         githubId: profile.id,
       });
+
+      console.log({ profile });
 
       return done(null, newUser);
     }
