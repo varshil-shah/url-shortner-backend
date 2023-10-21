@@ -5,6 +5,8 @@ const mongoSanitize = require("express-mongo-sanitize");
 const xss = require("xss-clean");
 const useragent = require("express-useragent");
 const cors = require("cors");
+const passport = require("passport");
+const GitHubStrategy = require("passport-github2").Strategy;
 
 const AppError = require("./utils/app-error");
 
@@ -33,6 +35,33 @@ app.use(xss());
 
 // Get useragent details
 app.use(useragent.express());
+
+// Passport configuration
+passport.use(
+  new GitHubStrategy(
+    {
+      clientID: process.env.GITHUB_CLIENT_ID,
+      clientSecret: process.env.GITHUB_CLIENT_SECRET,
+      callbackURL: process.env.GITHUB_CALLBACK_URL,
+    },
+    function (accessToken, refreshToken, profile, cb) {
+      console.log({ accessToken, refreshToken, profile });
+      console.log(profile.emails);
+      return cb(null, profile);
+    }
+  )
+);
+
+passport.serializeUser((user, done) => {
+  done(null, user);
+});
+
+passport.deserializeUser((obj, done) => {
+  done(null, obj);
+});
+
+// Initialize passport
+app.use(passport.initialize());
 
 // Log every request in development mode
 if (process.env.NODE_ENV === "development") app.use(morgan("dev"));

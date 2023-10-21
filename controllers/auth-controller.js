@@ -1,6 +1,7 @@
 const mongoose = require("mongoose");
 const express = require("express");
 const jwt = require("jsonwebtoken");
+const passport = require("passport");
 
 const { promisify } = require("util");
 
@@ -179,4 +180,12 @@ exports.updatePassword = catchAsync(async (req, res, next) => {
 
   // Send new token and logged in the user
   createAndSendToken(user, StatusCode.OK, res);
+});
+
+exports.githubAuth = passport.authenticate("github");
+
+exports.githubAuthCallback = passport.authenticate("github", {
+  // TODO: Change failureRedirect url based on frontend.
+  failureRedirect: "/login",
+  session: false,
 });
