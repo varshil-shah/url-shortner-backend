@@ -79,6 +79,17 @@ exports.login = catchAsync(async (req, res, next) => {
   // Check if the user exists and password is correct
   const user = await User.findOne({ email }).select("+password");
 
+  console.log({ user });
+  // If user is logged in with github, send error message
+  if (user && user.authType === "github") {
+    return next(
+      new AppError(
+        "You are logged in with github! Please login with github to continue",
+        StatusCode.UNAUTHORIZED
+      )
+    );
+  }
+
   if (!user || !(await user.verifyPassword(password, user.password))) {
     return next(
       new AppError(

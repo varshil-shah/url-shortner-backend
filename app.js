@@ -57,22 +57,33 @@ passport.use(
       callbackURL: process.env.GITHUB_CALLBACK_URL,
     },
     async function (accessToken, refreshToken, profile, done) {
-      // check if user already exists
-      const user = await User.findOne({ githubId: profile.id });
-      if (user) return done(null, user);
+      try {
+        // check if user already exists
+        const user = await User.findOne({ githubId: profile.id });
+        if (user) return done(null, user);
 
-      // create new user
-      const newUser = await User.create({
-        name: profile.displayName,
-        email: profile.emails[0].value || profile.email.value,
-        role: "user",
-        authType: "github",
-        githubId: profile.id,
-      });
+        console.log({ profile });
 
-      console.log({ profile });
+        const email =
+          profile.emails[0].value ||
+          String(profile.displayName || profile.username)
+            .split("-")
+            .join(".") + "@gmail.com";
 
-      return done(null, newUser);
+        // create new user
+        const newUser = await User.create({
+          name: profile.displayName,
+          email,
+          role: "user",
+          authType: "github",
+          githubId: profile.id,
+        });
+
+        return done(null, newUser);
+      } catch (err) {
+        console.log({ err });
+        return done(err, null);
+      }
     }
   )
 );
