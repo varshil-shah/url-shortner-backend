@@ -65,9 +65,9 @@ passport.use(
         console.log({ profile });
 
         const email =
-          profile.emails[0].value ||
+          profile.emails?.at(0)?.value ||
           String(profile.displayName || profile.username)
-            .split("-")
+            .split(/-| /)
             .join(".") + "@gmail.com";
 
         // create new user
