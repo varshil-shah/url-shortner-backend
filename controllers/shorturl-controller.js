@@ -32,8 +32,9 @@ exports.restrictShortUrl = catchAsync(async (req, res, next) => {
 });
 
 exports.createShortUrl = catchAsync(async (req, res, next) => {
+  console.log(req.body);
   // Get url from req.body
-  const { longUrl, description } = req.body;
+  const { longUrl, description, locationRedirects } = req.body;
 
   // Check if long url exists in req.body
   if (!longUrl) {
@@ -74,6 +75,7 @@ exports.createShortUrl = catchAsync(async (req, res, next) => {
     description,
     shortUrl,
     longUrl,
+    locationRedirects,
   });
 
   // Send short url
@@ -121,8 +123,29 @@ exports.getShortUrl = catchAsync(async (req, res, next) => {
 });
 
 exports.redirectShortUrl = catchAsync(async (req, res, next) => {
-  // Redirect user
-  res.status(StatusCode.MOVED_TEMPORARILY).redirect(req.longUrl);
+  const shortCode = req.shortCode;
+  const country = req.country.toLowerCase();
+
+  // Get short url instance
+  const shortUrlInstance = await ShortUrl.findOne({ shortCode });
+  console.log(shortUrlInstance.locationRedirects.length);
+  if (shortUrlInstance.locationRedirects.length === 0) {
+    // redirect user to default long url
+    res.status(StatusCode.MOVED_TEMPORARILY).redirect(req.longUrl);
+  } else {
+    // redirect user to long url based on country
+    const redirect = shortUrlInstance.locationRedirects.find(
+      (e) => e.country === country
+    );
+    console.log(country);
+    if (!redirect) {
+      // redirect user to default long url
+      res.status(StatusCode.MOVED_TEMPORARILY).redirect(req.longUrl);
+    } else {
+      // redirect user to long url based on country
+      res.status(StatusCode.MOVED_TEMPORARILY).redirect(redirect.redirectUrl);
+    }
+  }
 });
 
 exports.updateShortUrl = catchAsync(async (req, res, next) => {

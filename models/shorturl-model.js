@@ -1,6 +1,14 @@
 const mongoose = require("mongoose");
 const validator = require("validator");
 
+const locationRedirectSchema = new mongoose.Schema({
+  country: {
+    type: String,
+    lowercase: true,
+  },
+  redirectUrl: String,
+});
+
 const shortUrlSchema = new mongoose.Schema(
   {
     userId: {
@@ -44,6 +52,7 @@ const shortUrlSchema = new mongoose.Schema(
       type: Boolean,
       default: true,
     },
+    locationRedirects: [locationRedirectSchema],
   },
   {
     timestamps: { createdAt: true, updatedAt: true },
