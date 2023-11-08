@@ -69,6 +69,9 @@ exports.storeAnalytics = catchAsync(async (req, res, next) => {
     os: extractString(req.useragent.os),
   });
 
+  req.shortCode = shortCode;
+  req.country = data.country;
+
   // Move ahead
   next();
 });
