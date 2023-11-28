@@ -32,7 +32,6 @@ exports.restrictShortUrl = catchAsync(async (req, res, next) => {
 });
 
 exports.createShortUrl = catchAsync(async (req, res, next) => {
-  console.log(req.body);
   // Get url from req.body
   const { longUrl, description, locationRedirects } = req.body;
 
@@ -61,7 +60,6 @@ exports.createShortUrl = catchAsync(async (req, res, next) => {
   let shortCode = crc32
     .buf(Buffer.from(`${req.user._id}-${longUrl}`, "binary"), 0)
     .toString(16);
-  console.log({ shortCode });
   if (shortCode.startsWith("-")) shortCode = `z${shortCode.substring(1)}`;
 
   const shortUrl = `${req.protocol}://${req.get(
@@ -128,7 +126,6 @@ exports.redirectShortUrl = catchAsync(async (req, res, next) => {
 
   // Get short url instance
   const shortUrlInstance = await ShortUrl.findOne({ shortCode });
-  console.log(shortUrlInstance.locationRedirects.length);
   if (shortUrlInstance.locationRedirects.length === 0) {
     // redirect user to default long url
     res.status(StatusCode.MOVED_TEMPORARILY).redirect(req.longUrl);
@@ -137,7 +134,6 @@ exports.redirectShortUrl = catchAsync(async (req, res, next) => {
     const redirect = shortUrlInstance.locationRedirects.find(
       (e) => e.country === country
     );
-    console.log(country);
     if (!redirect) {
       // redirect user to default long url
       res.status(StatusCode.MOVED_TEMPORARILY).redirect(req.longUrl);

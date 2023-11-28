@@ -36,6 +36,14 @@ app.use(xss());
 // Get useragent details
 app.use(useragent.express());
 
+// Limit requests from same IP
+const limiter = expressRateLimiter({
+  max: 100,
+  windowMs: 60 * 60 * 1000,
+  message: "Too many requests from this IP, please try again in an hour",
+});
+app.use("/api", limiter);
+
 // Passport configuration
 passport.use(
   new GitHubStrategy(
